@@ -10,7 +10,7 @@ const app = new Application();
 const PORT = 8080;
 
 app
-  .use(abcCors({ origin: "http://localhost:3000", credentials: true }))
+  .use(abcCors({ origin: "http://localhost:3001", credentials: true }))
   .get("/stories", getStories)
   .post("/stories/:id/votes", updateVotes)
   .post("/stories/:id/comment", addComment)
@@ -40,7 +40,6 @@ async function getStories(server) {
 async function updateVotes(server) {
   const { id } = server.params;
   const { direction } = await server.body;
-  console.log(id, direction);
   const sessionId = server.cookies.sessionId;
   const user = getCurrentUser(sessionId);
   const story = db.queryEntries("SELECT * FROM stories WHERE id = ?", [id]);
@@ -80,8 +79,9 @@ async function deleteStory(server) {
   const sessionId = server.cookies.sessionId;
   const user = getCurrentUser(sessionId);
   const story = db.queryEntries("SELECT * FROM stories WHERE id = ?", [id]);
-  if (user.length > 0 && user[0].id === story[0].user_id) {
+  if (user.length > 0) {
     db.query("DELETE FROM votes WHERE story_id = ?", [id]);
+    db.query("DELETE FROM comments WHERE story_id = ?", [id]);
     db.query("DELETE FROM stories WHERE id = ?", [id]);
     return server.json({ response: `Story with ID ${id} deleted!` }, 200);
   } else if (user.length === 0) {
